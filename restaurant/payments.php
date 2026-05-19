@@ -65,6 +65,12 @@ function map_link($lat, $lng) {
     if ($lat === null || $lng === null || $lat === '' || $lng === '') return '';
     return 'https://www.google.com/maps?q=' . rawurlencode($lat . ',' . $lng);
 }
+
+function presence_text($label, $time, $lat, $lng) {
+    if (empty($time)) return $label . ': pendente';
+    $gps = map_link($lat, $lng) ? 'com GPS' : 'sem GPS';
+    return $label . ': ' . date('d/m/Y H:i', strtotime($time)) . ' (' . $gps . ')';
+}
 ?>
 <!doctype html>
 <html lang="pt-br">
@@ -119,7 +125,7 @@ function map_link($lat, $lng) {
   <div class="card p-3 mb-4">
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>Freelancer</th><th>Vaga</th><th>Presença</th><th>GPS</th><th>Pix</th><th>Valor</th><th>Pagamento</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Freelancer</th><th>Vaga</th><th>Presença</th><th>Localização</th><th>Pix</th><th>Valor</th><th>Pagamento</th><th>Ações</th></tr></thead>
         <tbody>
         <?php foreach($items as $item): ?>
           <tr>
@@ -131,13 +137,13 @@ function map_link($lat, $lng) {
             </td>
             <td><b><?=e($item['func'])?></b><br><small><?=date('d/m/Y', strtotime($item['shift_date']))?> · <?=substr($item['start_time'],0,5)?> às <?=substr($item['end_time'],0,5)?></small></td>
             <td>
-              <small>Entrada: <?=!empty($item['checkin_at']) ? date('d/m H:i', strtotime($item['checkin_at'])) : 'pendente'?></small><br>
-              <small>Saída: <?=!empty($item['checkout_at']) ? date('d/m H:i', strtotime($item['checkout_at'])) : 'pendente'?></small>
+              <small><?=e(presence_text('Entrada', $item['checkin_at'], $item['checkin_lat'], $item['checkin_lng']))?></small><br>
+              <small><?=e(presence_text('Saída', $item['checkout_at'], $item['checkout_lat'], $item['checkout_lng']))?></small>
             </td>
             <td>
               <?php $checkinMap = map_link($item['checkin_lat'], $item['checkin_lng']); $checkoutMap = map_link($item['checkout_lat'], $item['checkout_lng']); ?>
-              <?php if($checkinMap): ?><a target="_blank" href="<?=e($checkinMap)?>">Check-in</a><?php else: ?><span class="text-muted">Check-in sem GPS</span><?php endif; ?><br>
-              <?php if($checkoutMap): ?><a target="_blank" href="<?=e($checkoutMap)?>">Check-out</a><?php else: ?><span class="text-muted">Check-out sem GPS</span><?php endif; ?>
+              <?php if($checkinMap): ?><a target="_blank" href="<?=e($checkinMap)?>">Mapa do check-in</a><?php elseif(!empty($item['checkin_at'])): ?><span class="text-muted">Check-in registrado sem GPS</span><?php else: ?><span class="text-muted">Check-in pendente</span><?php endif; ?><br>
+              <?php if($checkoutMap): ?><a target="_blank" href="<?=e($checkoutMap)?>">Mapa do check-out</a><?php elseif(!empty($item['checkout_at'])): ?><span class="text-muted">Check-out registrado sem GPS</span><?php else: ?><span class="text-muted">Check-out pendente</span><?php endif; ?>
             </td>
             <td><small><?=e($item['chavepix'] ?: 'Não informado')?></small></td>
             <td><b>R$ <?=number_format($item['pay_value'], 2, ',', '.')?></b></td>

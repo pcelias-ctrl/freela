@@ -132,6 +132,12 @@ $detailStmt = $pdo->prepare("
       s.notes,
       f.name func,
       a.status application_status,
+      a.checkin_at,
+      a.checkin_lat,
+      a.checkin_lng,
+      a.checkout_at,
+      a.checkout_lat,
+      a.checkout_lng,
       fr.full_name,
       fr.photo_path,
       fr.whatsapp
@@ -167,7 +173,11 @@ foreach ($detailStmt->fetchAll() as $row) {
             'name' => $row['full_name'],
             'photo' => $row['photo_path'] ? app_url($row['photo_path']) : '',
             'initial' => initial_letter($row['full_name']),
-            'whatsapp' => $row['whatsapp']
+            'whatsapp' => $row['whatsapp'],
+            'checkin_at' => $row['checkin_at'] ? date('d/m/Y H:i', strtotime($row['checkin_at'])) : '',
+            'checkout_at' => $row['checkout_at'] ? date('d/m/Y H:i', strtotime($row['checkout_at'])) : '',
+            'checkin_gps' => ($row['checkin_lat'] !== null && $row['checkin_lng'] !== null && $row['checkin_lat'] !== '' && $row['checkin_lng'] !== ''),
+            'checkout_gps' => ($row['checkout_lat'] !== null && $row['checkout_lng'] !== null && $row['checkout_lat'] !== '' && $row['checkout_lng'] !== '')
         );
     }
 }
@@ -445,7 +455,13 @@ function renderPeople(list, confirmed) {
     var avatar = person.photo
       ? '<img class="person-avatar" src="' + escapeHtml(person.photo) + '" alt="Foto de ' + escapeHtml(person.name) + '">'
       : '<span class="person-avatar">' + escapeHtml(person.initial) + '</span>';
-    return '<div class="person-chip ' + (confirmed ? 'confirmed' : '') + '">' + avatar + '<div><b>' + escapeHtml(person.name) + '</b><br><small class="text-muted">' + escapeHtml(person.whatsapp || '') + '</small></div></div>';
+    var presence = '';
+    if (confirmed) {
+      presence =
+        '<br><small class="text-muted">Entrada: ' + (person.checkin_at ? escapeHtml(person.checkin_at) + (person.checkin_gps ? ' (com GPS)' : ' (sem GPS)') : 'pendente') + '</small>' +
+        '<br><small class="text-muted">Saída: ' + (person.checkout_at ? escapeHtml(person.checkout_at) + (person.checkout_gps ? ' (com GPS)' : ' (sem GPS)') : 'pendente') + '</small>';
+    }
+    return '<div class="person-chip ' + (confirmed ? 'confirmed' : '') + '">' + avatar + '<div><b>' + escapeHtml(person.name) + '</b><br><small class="text-muted">' + escapeHtml(person.whatsapp || '') + '</small>' + presence + '</div></div>';
   }).join('') + '</div>';
 }
 function openDayDetail(date) {
