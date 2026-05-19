@@ -1,0 +1,7 @@
+.git
+*.log
+.env
+uploads/*
+!uploads/.gitkeep
+!uploads/freelancers/
+!uploads/freelancers/.gitkeep
